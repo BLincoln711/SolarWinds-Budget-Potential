@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolarWinds Budget Decision Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #888;
+            font-size: 1em;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .control-group label {
+            display: block;
+            color: #4a9eff;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        select, input[type="range"] {
+            width: 100%;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        select:focus, input[type="range"]:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+        
+        .range-value {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 1.2em;
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #4a9eff, #00ff88);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .metric-card:hover::before {
+            transform: translateX(0);
+        }
+        
+        .metric-card:hover {
+            border-color: #4a9eff;
+            transform: translateY(-2px);
+        }
+        
+        .metric-card h3 {
+            color: #4a9eff;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .metric-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        .metric-change {
+            font-size: 0.9em;
+            color: #888;
+        }
+        
+        .positive {
+            color: #00ff88;
+        }
+        
+        .negative {
+            color: #ff4444;
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            height: 400px;
+        }
+        
+        .chart-container h3 {
+            color: #4a9eff;
+            margin-bottom: 20px;
+        }
+        
+        .table-section {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+        
+        .table-section h2 {
+            color: #4a9eff;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1400px;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+        
+        th {
+            background: #0a0a0a;
+            color: #4a9eff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8em;
+            letter-spacing: 1px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+        }
+        
+        th:hover {
+            background: #1a1a1a;
+        }
+        
+        td {
+            color: #e0e0e0;
+        }
+        
+        tr:hover {
+            background: rgba(74, 158, 255, 0.1);
+        }
+        
+        .high-opportunity {
+            background: rgba(0, 255, 136, 0.05);
+        }
+        
+        .high-opportunity:hover {
+            background: rgba(0, 255, 136, 0.15);
+        }
+        
+        .medium-opportunity {
+            background: rgba(255, 193, 7, 0.05);
+        }
+        
+        .medium-opportunity:hover {
+            background: rgba(255, 193, 7, 0.15);
+        }
+        
+        .efficiency-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+        
+        .efficiency-high {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+        
+        .efficiency-medium {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+        
+        .efficiency-low {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+        
+        .recommendation {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .recommendation-immediate {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+            color: #000;
+        }
+        
+        .recommendation-growth {
+            background: linear-gradient(135deg, #4a9eff 0%, #0066ff 100%);
+            color: #fff;
+        }
+        
+        .recommendation-optimize {
+            background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+            color: #fff;
+        }
+        
+        .summary-section {
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid #4a9eff;
+            margin-top: 30px;
+        }
+        
+        .summary-section h2 {
+            color: #00ff88;
+            margin-bottom: 20px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .summary-item {
+            text-align: center;
+        }
+        
+        .summary-label {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .summary-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fff;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #4a9eff;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-group {
+                min-width: 100%;
+            }
+            
+            table {
+                font-size: 0.75em;
+            }
+            
+            th, td {
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SOLARWINDS BUDGET INTELLIGENCE ENGINE</h1>
+            <p>Real-Time Campaign Performance & Budget Optimization | Feb-Jun 2025</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="monthFilter">Filter by Month</label>
+                <select id="monthFilter">
+                    <option value="all">All Months</option>
+                    <option value="February 2025">February 2025</option>
+                    <option value="March 2025">March 2025</option>
+                    <option value="April 2025">April 2025</option>
+                    <option value="May 2025">May 2025</option>
+                    <option value="June 2025">June 2025</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="accountFilter">Filter by Account</label>
+                <select id="accountFilter">
+                    <option value="all">All Accounts</option>
+                    <option value="SolarWinds - NA">North America</option>
+                    <option value="SolarWinds - EMEA">EMEA</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="lostISFilter">Min Lost IS% Threshold</label>
+                <input type="range" id="lostISFilter" min="0" max="90" value="0" step="10">
+                <div class="range-value" id="lostISValue">0%</div>
+            </div>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>Total Current Spend</h3>
+                <div class="metric-value" id="totalSpend">$0</div>
+                <div class="metric-change">Current Period</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Total Budget Opportunity</h3>
+                <div class="metric-value" id="budgetOpportunity">$0</div>
+                <div class="metric-change positive">Potential Spend</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Budget Gap</h3>
+                <div class="metric-value" id="budgetGap">$0</div>
+                <div class="metric-change negative" id="budgetGapPercent">0% Increase</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Avg Lost IS%</h3>
+                <div class="metric-value" id="avgLostIS">0%</div>
+                <div class="metric-change negative">Due to Budget</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Total Leads</h3>
+                <div class="metric-value" id="totalLeads">0</div>
+                <div class="metric-change">Actual Generated</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Projected Leads</h3>
+                <div class="metric-value" id="projectedLeads">0</div>
+                <div class="metric-change positive" id="leadIncrease">+0% Potential</div>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>Budget Distribution by Lost IS%</h3>
+                <canvas id="pieChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Top 10 Opportunities by Budget Gap</h3>
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="table-section">
+            <h2>CAMPAIGN PERFORMANCE MATRIX</h2>
+            <div class="table-wrapper">
+                <table id="campaignTable">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('campaign')">Campaign ↕</th>
+                            <th onclick="sortTable('account')">Account ↕</th>
+                            <th onclick="sortTable('month')">Month ↕</th>
+                            <th onclick="sortTable('currentSpend')">Current Spend ↕</th>
+                            <th onclick="sortTable('lostIS')">Lost IS% ↕</th>
+                            <th onclick="sortTable('leads')">Leads ↕</th>
+                            <th onclick="sortTable('cpl')">CPL ↕</th>
+                            <th onclick="sortTable('convRate')">Conv Rate ↕</th>
+                            <th onclick="sortTable('estimatedBudget')">Est. Budget ↕</th>
+                            <th onclick="sortTable('budgetGap')">Budget Gap ↕</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="campaignTableBody">
+                        <tr><td colspan="11" class="loading">Loading campaign data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="summary-section">
+            <h2>EXECUTIVE DECISION SUMMARY</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">Campaigns >50% IS Lost</div>
+                    <div class="summary-value" id="highLostCount">0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Immediate Opportunities</div>
+                    <div class="summary-value" id="immediateOppValue">$0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">High Efficiency Campaigns</div>
+                    <div class="summary-value" id="highEffCount">0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Avg ROI Timeline</div>
+                    <div class="summary-value" id="roiTimeline">45 Days</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Wait for Chart.js to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Parse and prepare campaign data
+            function parseCampaignData() {
+                const rawData = `SolarWinds - NA,NA-ALL-KNC-GGL-O+S-IPAM-PM-NB-MOFU,February 2025,3111.98,5,0,622.40,0.00,0.09,90.00,9.83,31119.80,28007.82,50,0
+SolarWinds - NA,NA-ALL-KNC-GGL-O+S-NPM-PM-NB-MOFU,February 2025,1342.39,5,0,268.48,0.00,4.76,90.00,5.46,13423.90,12081.51,50,0
+SolarWinds - EMEA,EMEA-ALL-KNC-GGL-O+S-NPM-PM-NB-MOFU,February 2025,738.57,4,0,184.64,0.00,2.18,90.00,7.41,7385.70,6647.13,40,0
+SolarWinds - NA,NA-ALL-KNC-GGL-O+S-IPAM-EM-NB-MOFU,February 2025,2289.91,3.99,0,573.33,0.00,1.44,89.91,9.88,22886.10,20596.19,39.9,0
+SolarWinds - NA,Google_Search_NA_O+S_NPM_Observability_SNMP_Exact,February 2025,444.87,1,1,444.87,444.87,2.27,87.20,15.58,3524.13,3079.26,7.92,7.92
+SolarWinds - NA,Google_Search_NA_O+S_NTA_Observability_SNMP_Phrase,February 2025,400.21,1.33,1,300.16,400.21,3.45,80.88,6.82,2080.36,1680.15,6.92,5.2
+SolarWinds - NA,NA-ALL-KNC-GGL-O+S-NPM-PM-NB-TOFU,February 2025,1146.59,4,0,286.65,0.00,3.23,79.48,8.71,5612.21,4465.62,19.58,0
+SolarWinds - NA,Google_Search_NA_O+S_ARM_Observability_Brand_Exact,March 2025,2189.51,4,0,547.38,0.00,1.89,78.01,17.67,9952.32,7762.81,18.18,0
+SolarWinds - NA,Google_Search_NA_O+S_NTA_Observability_SNMP_Phrase,March 2025,7328.44,4.06,0,1806.08,0.00,0.52,75.83,4.27,30254.05,22925.61,16.77,0
+SolarWinds - NA,Google_Search_NA_O+S_BrandX_Observability_Brand_Exact,March 2025,69671.81,52.23,16.5,1333.89,4222.23,1.89,57.38,9.77,162912.93,93241.12,122.15,38.59
+SolarWinds - NA,Google_Search_NA_O+S_NPM_Observability_SNMP_Phrase,March 2025,8562.69,12.56,0.83,681.79,10316.48,2.34,71.83,4.40,30548.29,21985.60,44.83,2.96
+SolarWinds - NA,Google_Search_NA_O+S_Bandwidth_Observability_SNMP_Exact,March 2025,5434.96,8.5,0,639.41,0.00,2.74,73.45,3.39,20906.31,15471.35,32.71,0
+SolarWinds - NA,NA-ALL-KNC-GGL-O+S-IPAM-EM-NB-MOFU,March 2025,22177.13,24.95,0,888.72,0.00,0.39,49.96,8.26,44323.52,22146.39,49.88,0
+SolarWinds - NA,Google_Search_NA_O+S_Monitor_Observability_Brand_Exact,March 2025,8504.61,12.58,5.5,675.96,1546.29,0.76,47.87,17.34,16280.15,7775.54,24.09,10.53
+SolarWinds - NA,Google_Search_NA_O+S_IPAM_Observability_SNMP_Exact,March 2025,13792.36,14.47,1,953.47,13792.36,1.06,74.16,8.12,53110.31,39317.95,55.74,3.85
+SolarWinds - NA,NA-ALL-KNC-GGL-O+S-NPM-EM-NB-BOFU,March 2025,10836.26,19.44,1,557.35,10836.26,1.28,73.56,5.34,41329.47,30493.21,74.14,3.81
+SolarWinds - NA,Google_Search_NA_O+S_BrandX_Observability_Brand_Exact,April 2025,94986.32,76.03,18.22,1249.28,5211.65,1.57,32.96,10.83,141695.96,46709.64,113.42,27.18
+SolarWinds - NA,Google_Search_NA_O+S_Bandwidth_Observability_SNMP_Exact,April 2025,16487.23,22.72,1,725.74,16487.23,1.12,38.53,3.81,26884.06,10396.83,37.04,1.63
+SolarWinds - NA,NA-ALL-KNC-GGL-O+S-IPAM-EM-NB-MOFU,April 2025,16595.03,31.59,0.5,525.37,33190.06,0.62,38.51,6.88,27019.42,10424.39,51.46,0.81
+SolarWinds - NA,Google_Search_NA_O+S_BrandX_Observability_Brand_Exact,May 2025,48136.44,60.8,12.98,791.71,3708.81,1.87,1.13,9.82,48687.22,550.78,61.5,13.13
+SolarWinds - NA,Google_Search_NA_O+S_NPM_Observability_SNMP_Phrase,May 2025,13673.91,14.88,1.5,919.02,9115.94,1.90,52.18,3.62,28549.25,14875.34,31.07,3.13
+SolarWinds - NA,Google_Search_NA_O+S_Bandwidth_Observability_SNMP_Exact,May 2025,8929.85,6,1,1488.31,8929.85,0.86,39.84,3.31,14843.30,5913.45,9.98,1.66
+SolarWinds - NA,Google_Search_NA_ITSM_TRY,May 2025,38368.83,17.61,4.5,2178.51,8526.41,1.41,15.58,3.80,45447.40,7078.57,20.86,5.33
+SolarWinds - EMEA,EMEA-ALL-KNC-GGL-O+S-BRAND-X-BR,March 2025,2042.95,0.49,0,4154.05,0.00,0.70,56.35,9.45,4714.39,2671.44,1.13,0
+SolarWinds - EMEA,EMEA-ALL-KNC-GGL-O+S-SOFTWARE-PM-BR-BOFU,May 2025,5846.39,2.25,0,2597.73,0.00,0.53,0.00,8.12,5846.39,0.00,2.25,0
+SolarWinds - NA,Google_Search_NA_O+S_NCM_Observability_Brand_Exact,May 2025,6349.64,16.35,4,388.47,1587.41,2.87,0.00,7.12,6349.64,0.00,16.35,4`;
+                
+                const lines = rawData.split('\n');
+                const campaignData = [];
+                
+                lines.forEach(line => {
+                    const parts = line.split(',');
+                    if (parts.length >= 15) {
+                        campaignData.push({
+                            account: parts[0],
+                            campaign: parts[1],
+                            month: parts[2],
+                            currentSpend: parseFloat(parts[3]) || 0,
+                            leads: parseFloat(parts[4]) || 0,
+                            opportunities: parseFloat(parts[5]) || 0,
+                            cpl: parseFloat(parts[6]) || 0,
+                            cpo: parseFloat(parts[7]) || 0,
+                            convRate: parseFloat(parts[8]) || 0,
+                            lostIS: parseFloat(parts[9]) || 0,
+                            ctr: parseFloat(parts[10]) || 0,
+                            estimatedBudget: parseFloat(parts[11]) || 0,
+                            budgetGap: parseFloat(parts[12]) || 0,
+                            projectedLeads: parseFloat(parts[13]) || 0,
+                            projectedOpps: parseFloat(parts[14]) || 0
+                        });
+                    }
+                });
+                
+                return campaignData;
+            }
+            
+            // Global variables
+            let campaignData = parseCampaignData();
+            let filteredData = [...campaignData];
+            let pieChart, barChart;
+            let sortColumn = 'budgetGap';
+            let sortDirection = 'desc';
+            
+            // Initialize charts
+            function initCharts() {
+                // Check if Chart is available
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js is not loaded');
+                    return;
+                }
+                
+                const pieCtx = document.getElementById('pieChart').getContext('2d');
+                const barCtx = document.getElementById('barChart').getContext('2d');
+                
+                pieChart = new Chart(pieCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            backgroundColor: [
+                                '#00ff88',
+                                '#4a9eff',
+                                '#ffc107',
+                                '#ff4444'
+                            ],
+                            borderColor: '#1a1a1a',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#e0e0e0',
+                                    padding: 15,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                barChart = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Budget Gap ($K)',
+                            data: [],
+                            backgroundColor: '#4a9eff',
+                            borderColor: '#00ff88',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#e0e0e0',
+                                    callback: function(value) {
+                                        return '$' + (value/1000).toFixed(0) + 'K';
+                                    }
+                                },
+                                grid: {
+                                    color: '#333'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#e0e0e0',
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                },
+                                grid: {
+                                    color: '#333'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Update charts with data
+            function updateCharts(data) {
+                if (!pieChart || !barChart) return;
+                
+                // Pie Chart - Budget Distribution by Lost IS%
+                const ranges = {
+                    '0-20% Lost': 0,
+                    '20-50% Lost': 0,
+                    '50-70% Lost': 0,
+                    '70%+ Lost': 0
+                };
+                
+                data.forEach(row => {
+                    if (row.lostIS <= 20) ranges['0-20% Lost']++;
+                    else if (row.lostIS <= 50) ranges['20-50% Lost']++;
+                    else if (row.lostIS <= 70) ranges['50-70% Lost']++;
+                    else ranges['70%+ Lost']++;
+                });
+                
+                pieChart.data.labels = Object.keys(ranges);
+                pieChart.data.datasets[0].data = Object.values(ranges);
+                pieChart.update();
+                
+                // Bar Chart - Top 10 Opportunities
+                const topOpportunities = [...data]
+                    .sort((a, b) => b.budgetGap - a.budgetGap)
+                    .slice(0, 10);
+                
+                barChart.data.labels = topOpportunities.map(row => 
+                    row.campaign.length > 30 ? row.campaign.substring(0, 30) + '...' : row.campaign
+                );
+                barChart.data.datasets[0].data = topOpportunities.map(row => row.budgetGap);
+                barChart.update();
+            }
+            
+            // Sort table
+            window.sortTable = function(column) {
+                if (sortColumn === column) {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortColumn = column;
+                    sortDirection = 'desc';
+                }
+                updateTable();
+            }
+            
+            // Determine efficiency level
+            function getEfficiencyLevel(row) {
+                if (row.convRate > 2 && row.cpl < 800) return 'high';
+                if (row.convRate > 1 || row.cpl < 1500) return 'medium';
+                return 'low';
+            }
+            
+            // Update table with filtered data
+            function updateTable() {
+                const monthFilter = document.getElementById('monthFilter').value;
+                const accountFilter = document.getElementById('accountFilter').value;
+                const lostISFilter = parseFloat(document.getElementById('lostISFilter').value);
+                
+                // Filter data
+                filteredData = campaignData.filter(row => {
+                    let matchMonth = monthFilter === 'all' || row.month === monthFilter;
+                    let matchAccount = accountFilter === 'all' || row.account === accountFilter;
+                    let matchLostIS = row.lostIS >= lostISFilter;
+                    return matchMonth && matchAccount && matchLostIS;
+                });
+                
+                // Sort data
+                filteredData.sort((a, b) => {
+                    let aVal = a[sortColumn];
+                    let bVal = b[sortColumn];
+                    if (sortDirection === 'asc') {
+                        return aVal > bVal ? 1 : -1;
+                    } else {
+                        return aVal < bVal ? 1 : -1;
+                    }
+                });
+                
+                // Update table body
+                const tbody = document.getElementById('campaignTableBody');
+                tbody.innerHTML = '';
+                
+                if (filteredData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 20px;">No campaigns match the selected filters</td></tr>';
+                    return;
+                }
+                
+                filteredData.forEach(row => {
+                    const tr = document.createElement('tr');
+                    
+                    // Add opportunity class based on lost IS%
+                    if (row.lostIS > 70) tr.classList.add('high-opportunity');
+                    else if (row.lostIS > 50) tr.classList.add('medium-opportunity');
+                    
+                    // Determine efficiency
+                    const efficiency = getEfficiencyLevel(row);
+                    let efficiencyBadge = '';
+                    if (efficiency === 'high') {
+                        efficiencyBadge = '<span class="efficiency-badge efficiency-high">HIGH</span>';
+                    } else if (efficiency === 'medium') {
+                        efficiencyBadge = '<span class="efficiency-badge efficiency-medium">MED</span>';
+                    } else {
+                        efficiencyBadge = '<span class="efficiency-badge efficiency-low">LOW</span>';
+                    }
+                    
+                    // Determine recommendation
+                    let recommendation = '';
+                    if (row.lostIS > 70 && efficiency === 'high') {
+                        recommendation = '<span class="recommendation recommendation-immediate">Immediate</span>';
+                    } else if (row.lostIS > 50) {
+                        recommendation = '<span class="recommendation recommendation-growth">Growth</span>';
+                    } else if (efficiency === 'low' || row.lostIS === 0) {
+                        recommendation = '<span class="recommendation recommendation-optimize">Optimize</span>';
+                    } else {
+                        recommendation = '<span class="recommendation recommendation-growth">Monitor</span>';
+                    }
+                    
+                    // Format campaign name
+                    const campaignName = row.campaign.length > 40 ? 
+                        row.campaign.substring(0, 40) + '...' : row.campaign;
+                    
+                    tr.innerHTML = `
+                        <td title="${row.campaign}">${campaignName}</td>
+                        <td>${row.account.replace('SolarWinds - ', '')}</td>
+                        <td>${row.month}</td>
+                        <td>$${row.currentSpend.toLocaleString()}</td>
+                        <td class="${row.lostIS > 50 ? 'negative' : ''}">${row.lostIS.toFixed(1)}%</td>
+                        <td>${row.leads.toFixed(1)}</td>
+                        <td>$${row.cpl.toFixed(0)}</td>
+                        <td>${row.convRate.toFixed(2)}%</td>
+                        <td>$${row.estimatedBudget.toLocaleString()}</td>
+                        <td class="positive">+$${row.budgetGap.toLocaleString()}</td>
+                        <td>${recommendation}</td>
+                    `;
+                    
+                    tbody.appendChild(tr);
+                });
+                
+                // Update metrics and charts
+                updateMetrics(filteredData);
+                updateCharts(filteredData);
+            }
+            
+            // Update summary metrics
+            function updateMetrics(data) {
+                if (data.length === 0) {
+                    document.getElementById('totalSpend').textContent = '$0';
+                    document.getElementById('budgetOpportunity').textContent = '$0';
+                    document.getElementById('budgetGap').textContent = '$0';
+                    document.getElementById('avgLostIS').textContent = '0%';
+                    document.getElementById('totalLeads').textContent = '0';
+                    document.getElementById('projectedLeads').textContent = '0';
+                    return;
+                }
+                
+                const totalSpend = data.reduce((sum, row) => sum + row.currentSpend, 0);
+                const totalEstimated = data.reduce((sum, row) => sum + row.estimatedBudget, 0);
+                const totalGap = totalEstimated - totalSpend;
+                const avgLostIS = data.reduce((sum, row) => sum + row.lostIS, 0) / data.length;
+                const totalLeads = data.reduce((sum, row) => sum + row.leads, 0);
+                const projectedLeads = data.reduce((sum, row) => sum + row.projectedLeads, 0);
+                
+                // Update DOM
+                document.getElementById('totalSpend').textContent = totalSpend > 1000000 ? 
+                    `$${(totalSpend/1000000).toFixed(2)}M` : `$${(totalSpend/1000).toFixed(0)}K`;
+                document.getElementById('budgetOpportunity').textContent = totalEstimated > 1000000 ? 
+                    `$${(totalEstimated/1000000).toFixed(2)}M` : `$${(totalEstimated/1000).toFixed(0)}K`;
+                document.getElementById('budgetGap').textContent = totalGap > 1000000 ? 
+                    `$${(totalGap/1000000).toFixed(2)}M` : `$${(totalGap/1000).toFixed(0)}K`;
+                document.getElementById('budgetGapPercent').textContent = 
+                    `${((totalGap/totalSpend)*100).toFixed(1)}% Increase`;
+                document.getElementById('avgLostIS').textContent = `${avgLostIS.toFixed(0)}%`;
+                document.getElementById('totalLeads').textContent = Math.round(totalLeads).toLocaleString();
+                document.getElementById('projectedLeads').textContent = Math.round(projectedLeads).toLocaleString();
+                document.getElementById('leadIncrease').textContent = 
+                    `+${(((projectedLeads - totalLeads) / totalLeads) * 100).toFixed(0)}% Potential`;
+                
+                // Update summary metrics
+                const highLostCount = data.filter(row => row.lostIS > 50).length;
+                const immediateOppValue = data
+                    .filter(row => row.lostIS > 70 && getEfficiencyLevel(row) === 'high')
+                    .reduce((sum, row) => sum + row.budgetGap, 0);
+                const highEffCount = data.filter(row => getEfficiencyLevel(row) === 'high').length;
+                
+                document.getElementById('highLostCount').textContent = highLostCount;
+                document.getElementById('immediateOppValue').textContent = immediateOppValue > 1000000 ? 
+                    `$${(immediateOppValue/1000000).toFixed(1)}M` : `$${(immediateOppValue/1000).toFixed(0)}K`;
+                document.getElementById('highEffCount').textContent = highEffCount;
+            }
+            
+            // Event listeners
+            document.getElementById('monthFilter').addEventListener('change', updateTable);
+            document.getElementById('accountFilter').addEventListener('change', updateTable);
+            document.getElementById('lostISFilter').addEventListener('input', function() {
+                document.getElementById('lostISValue').textContent = this.value + '%';
+                updateTable();
+            });
+            
+            // Initialize everything after a short delay to ensure Chart.js is loaded
+            setTimeout(function() {
+                initCharts();
+                updateTable();
+            }, 100);
+        });
+    </script>
+</body>
+</html>
